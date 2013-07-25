@@ -3,14 +3,14 @@ package org.terracotta.jenkins.plugins.acceleratedbuildnow;
 import hudson.model.AbstractProject;
 import hudson.model.Queue;
 import hudson.model.queue.QueueSorter;
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 /**
@@ -31,7 +31,7 @@ public class AcceleratedBuildNowSorterTest {
     DummyQueueSorter originalQueueSorter = new DummyQueueSorter();
     AcceleratedBuildNowSorter acceleratedBuildNowSorter = new AcceleratedBuildNowSorter(getAbstractProject("myProject"), originalQueueSorter);
     AcceleratedBuildNowSorter acceleratedBuildNowSorter2 = new AcceleratedBuildNowSorter(getAbstractProject("myProject"), acceleratedBuildNowSorter);
-    assertEquals(originalQueueSorter, acceleratedBuildNowSorter2.getOriginalQueueSorter());
+    assertEquals(acceleratedBuildNowSorter, acceleratedBuildNowSorter2.getOriginalQueueSorter());
   }
 
 

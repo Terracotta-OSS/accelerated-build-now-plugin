@@ -11,30 +11,30 @@ import java.util.List;
  * @author : Anthony Dahanne
  */
 public class AcceleratedBuildNowSorter extends QueueSorter {
+
   private final AbstractProject project;
   private final QueueSorter originalQueueSorter;
   private final AcceleratedBuildNowComparator comparator;
 
   public AcceleratedBuildNowSorter(AbstractProject project, QueueSorter originalQueueSorter) {
     this.project = project;
-    if(originalQueueSorter instanceof AcceleratedBuildNowSorter) {
-      this.originalQueueSorter = ((AcceleratedBuildNowSorter) originalQueueSorter).getOriginalQueueSorter();
-    } else {
-      this.originalQueueSorter =  originalQueueSorter;
-    }
+    this.originalQueueSorter =  originalQueueSorter;
     comparator = new AcceleratedBuildNowComparator(this.project);
   }
 
   @Override
   public void sortBuildableItems(List<Queue.BuildableItem> buildables) {
-    Collections.sort(buildables, comparator);
     if(this.originalQueueSorter != null) {
       this.originalQueueSorter.sortBuildableItems(buildables);
     }
+    Collections.sort(buildables, comparator);
   }
 
   public QueueSorter getOriginalQueueSorter() {
     return originalQueueSorter;
   }
 
+  public AbstractProject getProject() {
+    return project;
+  }
 }
