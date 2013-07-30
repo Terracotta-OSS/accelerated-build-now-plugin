@@ -14,9 +14,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 /**
+ *
+ * This class contains the main logic of the plugin
+ *
  * @author : Anthony Dahanne
  */
 public class AcceleratedBuildNowAction implements Action {
@@ -91,8 +95,8 @@ public class AcceleratedBuildNowAction implements Action {
     if(killedBuild == null) {
       LOG.info("project : " + project.getName() + " could not be built : no way to build it now !");
     } else {
-      AbstractBuild projectBuild = (AbstractBuild) queueTaskFuture.get();
-      LOG.info("build for : " + project.getName() + " was launched successfully !");
+      AbstractBuild projectBuild = ((Future<AbstractBuild>) queueTaskFuture.getStartCondition()).get();
+      LOG.info("build #" + projectBuild.getNumber() + " for " + project.getName() + " was launched successfully !");
 
       // we add a nice badge to the killer build
       projectBuild.getActions().add(new AcceleratedBuildNowBadgeAction(killedBuild));

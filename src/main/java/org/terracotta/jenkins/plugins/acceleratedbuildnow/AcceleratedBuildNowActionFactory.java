@@ -12,7 +12,7 @@ import java.util.Collection;
  * @author : Anthony Dahanne
  */
 @Extension
-public class AccelerateBuildNowActionFactory extends TransientProjectActionFactory{
+public class AcceleratedBuildNowActionFactory extends TransientProjectActionFactory{
   @Override
   public Collection<? extends Action> createFor(AbstractProject target) {
     ArrayList<Action> actions = new ArrayList<Action>();
