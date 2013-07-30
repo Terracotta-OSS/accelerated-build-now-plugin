@@ -6,7 +6,7 @@ The Jenkins Accelerated Build Now Plugin allows Jenkins users to launch a projec
 Simply clone this repo and run mvn clean install hpi:run
 
 ## How to install :
-Download the archive named accelerated-build-now-plugin.hpi and use Jenkins installer advanced tab to upload and install it to Jenkins.
+Download the [latest release](https://github.com/Terracotta-OSS/accelerated-build-now-plugin/releases) and use Jenkins installer advanced tab to upload and install it to Jenkins.
 
 ## How to use :
 When your Jenkins cluster is overloaded with jobs (a queue with 10+ builds, all the executors busy with nightly builds that take ages), you know you will wait ages before the job you want to run effectively starts running.
