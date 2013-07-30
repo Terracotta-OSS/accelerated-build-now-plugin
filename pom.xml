@@ -67,4 +67,15 @@
     </snapshotRepository>
   </distributionManagement>
 
+  <developers>
+    <developer>
+      <id>anthonydahanne</id>
+      <name>Anthony Dahanne</name>
+      <email>anthony.dahanne@gmail.com</email>
+      <organization>Terracotta</organization>
+      <organizationUrl>http://www.terracotta.org</organizationUrl>
+    </developer>
+  </developers>
+
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/Accelerated+Build+Now+Plugin</url>
 </project>
