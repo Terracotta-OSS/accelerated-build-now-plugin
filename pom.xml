@@ -44,4 +44,27 @@
       <url>http://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
+
+
+  <scm>
+    <url>https://github.com/Terracotta-OSS/accelerated-build-now-plugin</url>
+    <tag>HEAD</tag>
+    <connection>scm:git:ssh://git@github.com/Terracotta-OSS/accelerated-build-now-plugin.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/Terracotta-OSS/accelerated-build-now-plugin.git</developerConnection>
+  </scm>
+
+  <distributionManagement>
+    <repository>
+      <id>terracotta-os-releases</id>
+      <name>Terracotta OS Releases Repository</name>
+      <url>http://nexus.terracotta.lan:8080/content/repositories/terracotta-os-releases</url>
+    </repository>
+    <snapshotRepository>
+      <id>terracotta-os-snapshots</id>
+      <uniqueVersion>false</uniqueVersion>
+      <name>Terracotta OS Snapshots Repository</name>
+      <url>http://nexus.terracotta.lan:8080/content/repositories/terracotta-os-snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
 </project>
