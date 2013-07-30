@@ -56,6 +56,7 @@ public class AcceleratedBuildNowAction implements Action {
     if(alreadyTakenCareOf || jenkinsIsFreeToBuild) {
       LOG.info("No need for AcceleratedBuildNow plugin (already building or empty queue with idle executors");
       project.scheduleBuild2(0, new Cause.UserIdCause(), new Action[0]);
+      Jenkins.getInstance().getQueue().getSorter().sortBuildableItems(Jenkins.getInstance().getQueue().getBuildableItems());
       response.sendRedirect(request.getContextPath() + '/' + project.getUrl());
       return;
     }
@@ -80,7 +81,7 @@ public class AcceleratedBuildNowAction implements Action {
         if(isBuildNotTriggeredByHuman(lastBuild) && slaveRunningBuildCompatible(lastBuild,assignedLabel)) {
           LOG.info("project : " + lastBuild.getProject().getName() + " #" + lastBuild.getNumber() +" was not scheduled by a human, killing it right now to re schedule it later !");
           Executor executor = getExecutor(lastBuild);
-          executor.interrupt();
+          executor.interrupt(Result.ABORTED);
           killedBuild = lastBuild;
           break;
         }
@@ -141,10 +142,6 @@ public class AcceleratedBuildNowAction implements Action {
       }
       for (Node n : nodes) {
         Computer c = n.toComputer();
-//        for (Executor executor : c.getExecutors()) {
-//          executor.interrupt();
-//        }
-
         if(c!=null && (c.isOnline() || c.isConnecting()) && c.isAcceptingTasks()) {
           idleExecutors += c.countIdle();
         }
