@@ -13,19 +13,24 @@ When your Jenkins cluster is overloaded with jobs (a queue with 10+ builds, all 
 Relax ! With the Accelerated Build Now Plugin, your job will run right away !
 
 1. The queue is full of automatically (not user launched) scheduled jobs, and the only executor available is busy ...
+
 ![Screenshot](https://raw.github.com/Terracotta-OSS/accelerated-build-now-plugin/gh-pages/screenshots/queue_is_long.png "A long queue to wait for")
 
 2. You want your job maven-surefire to run ASAP, so you click on the Accelerated Build Now button
+
 ![Screenshot](https://raw.github.com/Terracotta-OSS/accelerated-build-now-plugin/gh-pages/screenshots/accelerated_button.png "Accelerated Build Now !")
 
 3. Your maven-surefire job just got priorized to the top of the queue and just started running (it had to kill the quartz job, but it rescheduled it already)
+
 ![Screenshot](https://raw.github.com/Terracotta-OSS/accelerated-build-now-plugin/gh-pages/screenshots/job_running.png "Your job is running")
 
 4. A nice rhyno badge was added to your build that got "acceleratedly built" ; if you click on it you will see the killed build got a killed rhyno badge
-![Screenshot](https://raw.github.com/Terracotta-OSS/accelerated-build-now-plugin/gh-pages/screenshots/build_prioritized "Killer Rhyno !")
-![Screenshot](https://raw.github.com/Terracotta-OSS/accelerated-build-now-plugin/gh-pages/screenshots/build_aborted "Killed Rhyno !")
 
-## How that works ?
+![Screenshot](https://raw.github.com/Terracotta-OSS/accelerated-build-now-plugin/gh-pages/screenshots/build_prioritized.png "Killer Rhyno !")
+
+![Screenshot](https://raw.github.com/Terracotta-OSS/accelerated-build-now-plugin/gh-pages/screenshots/build_aborted.png "Killed Rhyno !")
+
+## How does that work ?
 When you click on the Accelerated Build Now button, the plugin will :
 * make sure the queue is not empty and all the excutors are busy ( if not, it will normally schedule the build and exit)
 * sort the queue using a QueueSorter wrapping any existing QueueSorter (such as the Priority Sorter Plugin queue sorter)
