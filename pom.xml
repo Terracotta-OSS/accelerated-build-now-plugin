@@ -53,7 +53,8 @@
     <developerConnection>scm:git:ssh://git@github.com/Terracotta-OSS/accelerated-build-now-plugin.git</developerConnection>
   </scm>
 
-  <distributionManagement>
+  <!-- we use jenkins maven repo -->
+  <!--distributionManagement>
     <repository>
       <id>terracotta-os-releases</id>
       <name>Terracotta OS Releases Repository</name>
@@ -65,7 +66,7 @@
       <name>Terracotta OS Snapshots Repository</name>
       <url>http://nexus.terracotta.lan:8080/content/repositories/terracotta-os-snapshots</url>
     </snapshotRepository>
-  </distributionManagement>
+  </distributionManagement-->
 
   <developers>
     <developer>
