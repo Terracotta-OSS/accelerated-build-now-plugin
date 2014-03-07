@@ -1,17 +1,17 @@
 package org.terracotta.jenkins.plugins.acceleratedbuildnow;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 import hudson.model.AbstractProject;
 import hudson.model.Queue;
 import hudson.model.queue.QueueSorter;
-import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author : Anthony Dahanne
@@ -35,8 +35,8 @@ public class AcceleratedBuildNowSorterTest {
   }
 
 
-  private AbstractProject getAbstractProject(final String importantProject) {
-    AbstractProject abstractProject = Mockito.mock(AbstractProject.class);
+	private AbstractProject<?, ?> getAbstractProject(final String importantProject) {
+		AbstractProject<?, ?> abstractProject = Mockito.mock(AbstractProject.class);
     when(abstractProject.getName()).thenReturn(importantProject);
     return abstractProject;
   }

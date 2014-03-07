@@ -1,14 +1,21 @@
 package org.terracotta.jenkins.plugins.acceleratedbuildnow;
 
+import hudson.matrix.MatrixConfiguration;
+import hudson.matrix.MatrixProject;
 import hudson.maven.MavenBuild;
-import hudson.model.*;
+import hudson.model.Action;
+import hudson.model.Item;
+import hudson.model.Result;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Cause;
+import hudson.model.Computer;
+import hudson.model.Executor;
+import hudson.model.Label;
+import hudson.model.Node;
 import hudson.model.queue.QueueSorter;
 import hudson.model.queue.QueueTaskFuture;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +23,13 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
+
+import javax.servlet.ServletException;
+
+import jenkins.model.Jenkins;
+
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
 /**
  * This class contains the main logic of the plugin
@@ -53,7 +67,7 @@ public class AcceleratedBuildNowAction implements Action {
   }
 
   public void doBuild(final StaplerRequest request, final StaplerResponse response) throws ServletException,
-          IOException, InterruptedException, ExecutionException {
+      IOException, InterruptedException, ExecutionException {
 
     if (!project.hasPermission(Item.BUILD)) {
       // Jenkins is secured AND the user is not supposed to build this job
@@ -65,24 +79,22 @@ public class AcceleratedBuildNowAction implements Action {
     Label assignedLabel = project.getAssignedLabel();
 
     // what if the user clicks repeatedly on the link ?
-    boolean alreadyTakenCareOf = project.getLastBuild() != null && project.getLastBuild().isBuilding() || queueSorterPriorityOn(project);
+    boolean alreadyTakenCareOf = project.getLastBuild() != null && project.getLastBuild().isBuilding()
+        || queueSorterPriorityOn(project);
 
     // what if the queue is empty and all executors are already busy ?
     boolean jenkinsIsFreeToBuild = Jenkins.getInstance().getQueue().isEmpty() && atLeastOneExecutorIsIdle(assignedLabel);
 
+    LOG.info("project : " + project.getName() + " is scheduled to build now !");
+    QueueTaskFuture queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause(), new Action[0]);
     if (alreadyTakenCareOf || jenkinsIsFreeToBuild) {
       LOG.info("No need for AcceleratedBuildNow plugin (already building or empty queue with idle executors");
-      project.scheduleBuild2(0, new Cause.UserIdCause(), new Action[0]);
-      if(Jenkins.getInstance().getQueue().getSorter() !=null && Jenkins.getInstance().getQueue().getBuildableItems()!=null) {
+      if((Jenkins.getInstance().getQueue().getSorter() !=null) && (Jenkins.getInstance().getQueue().getBuildableItems()!=null)) {
         Jenkins.getInstance().getQueue().getSorter().sortBuildableItems(Jenkins.getInstance().getQueue().getBuildableItems());
       }
       response.sendRedirect(request.getContextPath() + '/' + project.getUrl());
       return;
     }
-
-    QueueTaskFuture queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause(), new Action[0]);
-    LOG.info("project : " + project.getName() + " is scheduled to build now !");
-
 
     //replace the original queue sorter with one that will place our project build first in the queue
     QueueSorter originalQueueSorter = Jenkins.getInstance().getQueue().getSorter();
@@ -97,7 +109,8 @@ public class AcceleratedBuildNowAction implements Action {
       AbstractBuild lastBuild = getLastBuild(projectConsidered);
 
       if (lastBuild != null && lastBuild.isBuilding()) {
-        if (isBuildNotTriggeredByHuman(lastBuild) && slaveRunningBuildCompatible(lastBuild, assignedLabel)) {
+        if (isBuildNotTriggeredByHuman(lastBuild) && slaveRunningBuildCompatible(lastBuild, assignedLabel)
+            && !(projectConsidered instanceof MatrixProject) && !(projectConsidered instanceof MatrixConfiguration)) {
           LOG.info("project : " + lastBuild.getProject().getName() + " #" + lastBuild.getNumber() + " was not scheduled by a human, killing it right now to re schedule it later !");
           Executor executor = getExecutor(lastBuild);
           executor.interrupt(Result.ABORTED);
@@ -108,7 +121,8 @@ public class AcceleratedBuildNowAction implements Action {
     }
 
     if (killedBuild == null) {
-      LOG.info("project : " + project.getName() + " could not be built : no way to build it now !");
+      LOG.info("project : " + project.getName()
+          + " could not be acceleratedly built (no builds could be aborted) : 'normal' build was triggered though !");
     } else {
       AbstractBuild projectBuild = ((Future<AbstractBuild>) queueTaskFuture.getStartCondition()).get();
       LOG.info("build #" + projectBuild.getNumber() + " for " + project.getName() + " was launched successfully !");

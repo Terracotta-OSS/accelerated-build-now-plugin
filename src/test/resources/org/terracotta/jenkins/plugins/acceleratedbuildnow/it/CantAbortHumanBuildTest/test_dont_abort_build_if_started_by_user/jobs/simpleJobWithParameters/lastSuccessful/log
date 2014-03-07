@@ -1,0 +1,5 @@
+Started by user [8mha:AAAAlh+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+vOD8nVc83PyU1x6OyILUoJzMv2y+/JJUBAhiZGBgqihhk0NSjKDWzXb3RdlLBUSYGJk8GtpzUvPSSDB8G5tKinBIGIZ+sxLJE/ZzEvHT94JKizLx0a6BxUmjGOUNodHsLgAzOEgYu/dLi1CL9vNKcHACFIKlWvwAAAA==[0manonymous
+Building in workspace /Users/anthony/workspaces/jenkins/accelerated-build-now-plugin/work-jenkins/workspace/simpleJobWithParameters
+[simpleJobWithParameters] $ /bin/sh -xe /var/folders/7b/bp38nmxn1m5215pp9vt0qfz80000gn/T/hudson110459305164053917.sh
++ sleep 1
+Finished: SUCCESS
