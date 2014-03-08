@@ -11,7 +11,7 @@ import hudson.model.Job;
 
 import java.util.List;
 
-import jenkins.model.Jenkins;
+import hudson.model.Hudson;
 
 import org.junit.Test;
 import org.jvnet.hudson.test.HudsonTestCase;
@@ -28,7 +28,7 @@ public class NominalTest extends HudsonTestCase {
   public void test_start_job1_then_accelerated_built_job_should_cancel_job1_start_itself_and_reschedule_job1()
       throws Exception {
 
-    System.out.println("I have : " + Jenkins.getInstance().getNumExecutors() + " executor(s) available");
+    System.out.println("I have : " + Hudson.getInstance().getNumExecutors() + " executor(s) available");
 
     FreeStyleProject job1 = createFreeStyleProject("job1");
     job1.getBuildersList().add(new SleepBuilder(3000));
@@ -44,8 +44,13 @@ public class NominalTest extends HudsonTestCase {
     StaplerResponse response = mock(StaplerResponse.class);
     doNothing().when(response).sendRedirect(anyString());
 
-    List<Job> allItems = Jenkins.getInstance().getAllItems(Job.class);
+    List<Job> allItems = Hudson.getInstance().getAllItems(Job.class);
+
     acceleratedBuildNowAction.doBuild(request, response);
+    while (!Hudson.getInstance().getQueue().isEmpty()) {
+      Thread.sleep(1000);
+      System.out.println("Waiting for the queue to empty");
+    }
     for (Job job : allItems) {
       while (job.isBuilding()) {
         System.out.println("Job " + job.getName() + " is still building !");
@@ -64,8 +69,8 @@ public class NominalTest extends HudsonTestCase {
     assertBuildStatus(Result.SUCCESS, acceleratedJobOnlyBuild);
 
     // job1firstBuild started before acceleratedJobOnlyBuild that started before job1lastBuild
-    assertTrue(job1firstBuild.getStartTimeInMillis() < acceleratedJobOnlyBuild.getStartTimeInMillis());
-    assertTrue(acceleratedJobOnlyBuild.getStartTimeInMillis() < job1lastBuild.getStartTimeInMillis());
+    assertTrue(job1firstBuild.getTimeInMillis() < acceleratedJobOnlyBuild.getTimeInMillis());
+    assertTrue(acceleratedJobOnlyBuild.getTimeInMillis() < job1lastBuild.getTimeInMillis());
   }
 
 }

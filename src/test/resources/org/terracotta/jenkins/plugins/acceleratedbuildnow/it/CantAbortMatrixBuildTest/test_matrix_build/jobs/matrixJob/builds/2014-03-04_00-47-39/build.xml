@@ -31,7 +31,7 @@
   <workspace>/Users/anthony/workspaces/jenkins/accelerated-build-now-plugin/work-jenkins/workspace/matrixJob</workspace>
   <hudsonVersion>1.523</hudsonVersion>
   <scm class="hudson.scm.NullChangeLogParser"/>
-  <culprits class="com.google.common.collect.EmptyImmutableSortedSet"/>
+  <culprits/>
   <axes>
     <hudson.matrix.TextAxis>
       <name>myAxis</name>

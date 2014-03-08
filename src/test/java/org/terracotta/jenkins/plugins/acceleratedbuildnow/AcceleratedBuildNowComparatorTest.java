@@ -2,16 +2,13 @@ package org.terracotta.jenkins.plugins.acceleratedbuildnow;
 
 import hudson.model.*;
 import hudson.model.Queue;
-import hudson.model.queue.CauseOfBlockage;
-import jenkins.util.NonLocalizable;
 import org.junit.Assert;
 import org.junit.Test;
-import org.jvnet.localizer.Localizable;
 import org.mockito.Mockito;
+import static org.hamcrest.CoreMatchers.is;
 
 import java.util.*;
 
-import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.when;
 
 /**
@@ -35,12 +32,16 @@ public class AcceleratedBuildNowComparatorTest {
     Queue.BuildableItem  importantBuildableItem =  new Queue.BuildableItem(new Queue.WaitingItem(Calendar.getInstance(),importantProject,new ArrayList<Action>()));
     buildableItemList.add(importantBuildableItem);
 
-    Assert.assertThat(buildableItemList,contains(notImportantBuildableItem, notImportantEitherBuildableItem, importantBuildableItem));
+    Assert.assertThat(buildableItemList.get(0), is(notImportantBuildableItem));
+    Assert.assertThat(buildableItemList.get(1), is(notImportantEitherBuildableItem));
+    Assert.assertThat(buildableItemList.get(2), is(importantBuildableItem));
 
     Comparator<Queue.BuildableItem> acceleratedBuildNowComparator = new AcceleratedBuildNowComparator(importantProject);
     Collections.sort(buildableItemList, acceleratedBuildNowComparator);
 
-    Assert.assertThat(buildableItemList,contains(importantBuildableItem, notImportantBuildableItem,notImportantEitherBuildableItem));
+    Assert.assertThat(buildableItemList.get(0), is(importantBuildableItem));
+    Assert.assertThat(buildableItemList.get(1), is(notImportantBuildableItem));
+    Assert.assertThat(buildableItemList.get(2), is(notImportantEitherBuildableItem));
   }
 
 
@@ -56,12 +57,14 @@ public class AcceleratedBuildNowComparatorTest {
     Queue.BuildableItem  notImportantBuildableItem =  new Queue.BuildableItem(new Queue.WaitingItem(Calendar.getInstance(),notImportant,new ArrayList<Action>()));
     buildableItemList.add(notImportantBuildableItem);
 
-    Assert.assertThat(buildableItemList,contains(importantBuildableItem, notImportantBuildableItem));
+    Assert.assertThat(buildableItemList.get(0), is(importantBuildableItem));
+    Assert.assertThat(buildableItemList.get(1), is(notImportantBuildableItem));
 
     Comparator<Queue.BuildableItem> acceleratedBuildNowComparator = new AcceleratedBuildNowComparator(importantProject);
     Collections.sort(buildableItemList, acceleratedBuildNowComparator);
 
-    Assert.assertThat(buildableItemList,contains(importantBuildableItem, notImportantBuildableItem));
+    Assert.assertThat(buildableItemList.get(0), is(importantBuildableItem));
+    Assert.assertThat(buildableItemList.get(1), is(notImportantBuildableItem));
   }
 
 

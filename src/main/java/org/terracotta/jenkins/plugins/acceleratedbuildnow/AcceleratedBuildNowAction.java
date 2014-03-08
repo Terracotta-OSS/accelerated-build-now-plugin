@@ -2,10 +2,8 @@ package org.terracotta.jenkins.plugins.acceleratedbuildnow;
 
 import hudson.matrix.MatrixConfiguration;
 import hudson.matrix.MatrixProject;
-import hudson.maven.MavenBuild;
 import hudson.model.Action;
 import hudson.model.Item;
-import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
@@ -14,8 +12,6 @@ import hudson.model.Executor;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.queue.QueueSorter;
-import hudson.model.queue.QueueTaskFuture;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -26,7 +22,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
-import jenkins.model.Jenkins;
+import hudson.model.Hudson;
 
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -67,10 +63,10 @@ public class AcceleratedBuildNowAction implements Action {
   }
 
   public void doBuild(final StaplerRequest request, final StaplerResponse response) throws ServletException,
-      IOException, InterruptedException, ExecutionException {
+  IOException, InterruptedException, ExecutionException {
 
     if (!project.hasPermission(Item.BUILD)) {
-      // Jenkins is secured AND the user is not supposed to build this job
+      // Hudson is secured AND the user is not supposed to build this job
       response.sendRedirect(request.getContextPath() + '/' + project.getUrl());
     }
 
@@ -83,28 +79,30 @@ public class AcceleratedBuildNowAction implements Action {
         || queueSorterPriorityOn(project);
 
     // what if the queue is empty and all executors are already busy ?
-    boolean jenkinsIsFreeToBuild = Jenkins.getInstance().getQueue().isEmpty() && atLeastOneExecutorIsIdle(assignedLabel);
+    boolean jenkinsIsFreeToBuild = Hudson.getInstance().getQueue().isEmpty() && atLeastOneExecutorIsIdle(assignedLabel);
 
     LOG.info("project : " + project.getName() + " is scheduled to build now !");
-    QueueTaskFuture queueTaskFuture = project.scheduleBuild2(0, new Cause.UserIdCause(), new Action[0]);
+    Future queueTaskFuture = project.scheduleBuild2(0, new Cause.UserCause(), new Action[0]);
     if (alreadyTakenCareOf || jenkinsIsFreeToBuild) {
       LOG.info("No need for AcceleratedBuildNow plugin (already building or empty queue with idle executors");
-      if((Jenkins.getInstance().getQueue().getSorter() !=null) && (Jenkins.getInstance().getQueue().getBuildableItems()!=null)) {
-        Jenkins.getInstance().getQueue().getSorter().sortBuildableItems(Jenkins.getInstance().getQueue().getBuildableItems());
+      if ((Hudson.getInstance().getQueue().getSorter() != null)
+          && (Hudson.getInstance().getQueue().getBuildableItems() != null)) {
+        Hudson.getInstance().getQueue().getSorter()
+            .sortBuildableItems(Hudson.getInstance().getQueue().getBuildableItems());
       }
       response.sendRedirect(request.getContextPath() + '/' + project.getUrl());
       return;
     }
 
     //replace the original queue sorter with one that will place our project build first in the queue
-    QueueSorter originalQueueSorter = Jenkins.getInstance().getQueue().getSorter();
+    QueueSorter originalQueueSorter = Hudson.getInstance().getQueue().getSorter();
     AcceleratedBuildNowSorter acceleratedBuildNowSorter = new AcceleratedBuildNowSorter(project, originalQueueSorter);
-    Jenkins.getInstance().getQueue().setSorter(acceleratedBuildNowSorter);
+    Hudson.getInstance().getQueue().setSorter(acceleratedBuildNowSorter);
     // we sort the queue so that our project is next to be built on the list
-    Jenkins.getInstance().getQueue().getSorter().sortBuildableItems(Jenkins.getInstance().getQueue().getBuildableItems());
+    Hudson.getInstance().getQueue().getSorter().sortBuildableItems(Hudson.getInstance().getQueue().getBuildableItems());
 
     AbstractBuild killedBuild = null;
-    List<AbstractProject> allItems = Jenkins.getInstance().getAllItems(AbstractProject.class);
+    List<AbstractProject> allItems = Hudson.getInstance().getAllItems(AbstractProject.class);
     for (AbstractProject projectConsidered : allItems) {
       AbstractBuild lastBuild = getLastBuild(projectConsidered);
 
@@ -113,7 +111,7 @@ public class AcceleratedBuildNowAction implements Action {
             && !(projectConsidered instanceof MatrixProject) && !(projectConsidered instanceof MatrixConfiguration)) {
           LOG.info("project : " + lastBuild.getProject().getName() + " #" + lastBuild.getNumber() + " was not scheduled by a human, killing it right now to re schedule it later !");
           Executor executor = getExecutor(lastBuild);
-          executor.interrupt(Result.ABORTED);
+          executor.interrupt();
           killedBuild = lastBuild;
           break;
         }
@@ -124,7 +122,7 @@ public class AcceleratedBuildNowAction implements Action {
       LOG.info("project : " + project.getName()
           + " could not be acceleratedly built (no builds could be aborted) : 'normal' build was triggered though !");
     } else {
-      AbstractBuild projectBuild = ((Future<AbstractBuild>) queueTaskFuture.getStartCondition()).get();
+      AbstractBuild projectBuild = ((Future<AbstractBuild>) queueTaskFuture).get();
       LOG.info("build #" + projectBuild.getNumber() + " for " + project.getName() + " was launched successfully !");
 
       // we add a nice badge to the killer build
@@ -136,7 +134,7 @@ public class AcceleratedBuildNowAction implements Action {
       // we re schedule the build that got killed
       rescheduleKilledBuild(killedBuild, new AcceleratedBuildNowKilledCause(), originalQueueSorter);
     }
-    Jenkins.getInstance().getQueue().setSorter(originalQueueSorter);
+    Hudson.getInstance().getQueue().setSorter(originalQueueSorter);
 
     response.sendRedirect(request.getContextPath() + '/' + project.getUrl());
   }
@@ -152,11 +150,11 @@ public class AcceleratedBuildNowAction implements Action {
   }
 
   private AbstractBuild getLastBuild(AbstractProject projectConsidered) {
-    AbstractBuild lastBuild = projectConsidered.getLastBuild();
+    AbstractBuild lastBuild = (AbstractBuild) projectConsidered.getLastBuild();
     // be careful that lastBuild can be a maven module building !
-    if (lastBuild instanceof MavenBuild) {
-      lastBuild = ((MavenBuild) lastBuild).getParentBuild();
-    }
+//    if (lastBuild instanceof MavenBuild) {
+//      lastBuild = ((MavenBuild) lastBuild).getParentBuild();
+//    }
     return lastBuild;
   }
 
@@ -168,7 +166,7 @@ public class AcceleratedBuildNowAction implements Action {
       // no assignedLabel ? that's fine, let's find any idle executor
       // code based on Label.class code
       Set<Node> nodes = new HashSet<Node>();
-      Jenkins h = Jenkins.getInstance();
+      Hudson h = Hudson.getInstance();
       nodes.add(h);
       for (Node n : h.getNodes()) {
         nodes.add(n);
@@ -186,7 +184,7 @@ public class AcceleratedBuildNowAction implements Action {
   }
 
   private boolean queueSorterPriorityOn(AbstractProject project) {
-    QueueSorter originalQueueSorter = Jenkins.getInstance().getQueue().getSorter();
+    QueueSorter originalQueueSorter = Hudson.getInstance().getQueue().getSorter();
     if (originalQueueSorter instanceof AcceleratedBuildNowSorter) {
       if (((AcceleratedBuildNowSorter) originalQueueSorter).getProject().equals(project)) {
         return true;
@@ -196,7 +194,7 @@ public class AcceleratedBuildNowAction implements Action {
   }
 
   private boolean isBuildNotTriggeredByHuman(AbstractBuild lastBuild) {
-    return lastBuild.getCause(Cause.UserIdCause.class) == null && lastBuild.getCause(Cause.UserCause.class) == null;
+    return lastBuild.getCause(Cause.UserCause.class) == null && lastBuild.getCause(Cause.UserCause.class) == null;
   }
 
   private boolean slaveRunningBuildCompatible(AbstractBuild lastBuild, Label assignedLabel) {
@@ -210,13 +208,13 @@ public class AcceleratedBuildNowAction implements Action {
   private void rescheduleKilledBuild(AbstractBuild killedBuild, Cause cause, QueueSorter originalQueueSorter) throws ExecutionException, InterruptedException {
     //replace the original queue sorter with one that will place our project build first in the queue
     AcceleratedBuildNowSorter acceleratedBuildNowSorter = new AcceleratedBuildNowSorter(project, originalQueueSorter);
-    Jenkins.getInstance().getQueue().setSorter(acceleratedBuildNowSorter);
+    Hudson.getInstance().getQueue().setSorter(acceleratedBuildNowSorter);
 
-    QueueTaskFuture queueTaskFuture = killedBuild.getProject().scheduleBuild2(0, cause, new Action[0]);
+    Future queueTaskFuture = killedBuild.getProject().scheduleBuild2(0, cause, new Action[0]);
     LOG.info("build that was killed : " + killedBuild.getProject().getName() + " #" + killedBuild.getNumber() + " is scheduled to build next !");
 
     // we sort the queue so that our project is next to be built on the list
-    Jenkins.getInstance().getQueue().getSorter().sortBuildableItems(Jenkins.getInstance().getQueue().getBuildableItems());
+    Hudson.getInstance().getQueue().getSorter().sortBuildableItems(Hudson.getInstance().getQueue().getBuildableItems());
 
   }
 

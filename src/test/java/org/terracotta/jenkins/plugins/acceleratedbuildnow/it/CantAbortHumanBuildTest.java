@@ -1,7 +1,5 @@
 package org.terracotta.jenkins.plugins.acceleratedbuildnow.it;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -19,7 +17,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 
-import jenkins.model.Jenkins;
+import hudson.model.Hudson;
 
 import org.junit.Test;
 import org.jvnet.hudson.test.HudsonTestCase;
@@ -35,13 +33,13 @@ public class CantAbortHumanBuildTest extends HudsonTestCase {
   @Test
   @LocalData
   public void test_dont_abort_build_if_started_by_user() throws Exception {
-    System.out.println("I have : " + Jenkins.getInstance().getNumExecutors() + " executor(s) available");
+    System.out.println("I have : " + Hudson.getInstance().getNumExecutors() + " executor(s) available");
 
-    FreeStyleProject job1 = Jenkins.getInstance().getAllItems(FreeStyleProject.class).get(0);
-    assertThat(job1.getName(), equalTo("simpleJobWithParameters"));
+    FreeStyleProject job1 = Hudson.getInstance().getAllItems(FreeStyleProject.class).get(0);
+    assertEquals("simpleJobWithParameters", job1.getName());
     job1.getBuildersList().add(new SleepBuilder(3000));
 
-    httpPostBuildToJenkins("job/simpleJobWithParameters/buildWithParameters", "stringParameterName=Value&.crumb=test");
+    httpPostBuildToHudson("job/simpleJobWithParameters/buildWithParameters", "stringParameterName=Value&.crumb=test");
 
     FreeStyleProject acceleratedJob = createFreeStyleProject("acceleratedJob");
     acceleratedJob.getBuildersList().add(new SleepBuilder(3000));
@@ -55,7 +53,7 @@ public class CantAbortHumanBuildTest extends HudsonTestCase {
 
     acceleratedBuildNowAction.doBuild(request, response);
 
-    while (!Jenkins.getInstance().getQueue().isEmpty()) {
+    while (!Hudson.getInstance().getQueue().isEmpty()) {
       Thread.sleep(1000);
       System.out.println("Waiting for the queue to empty");
     }
@@ -74,12 +72,12 @@ public class CantAbortHumanBuildTest extends HudsonTestCase {
     assertBuildStatus(Result.SUCCESS, acceleratedJobOnlyBuild);
 
     // job1firstBuild started before acceleratedJobOnlyBuild
-    assertTrue(job1FirstBuild.getStartTimeInMillis() < acceleratedJobOnlyBuild.getStartTimeInMillis());
+    assertTrue(job1FirstBuild.getTimeInMillis() < acceleratedJobOnlyBuild.getTimeInMillis());
   }
 
-  private void httpPostBuildToJenkins(String urlSuffix, String urlParameters) throws MalformedURLException,
+  private void httpPostBuildToHudson(String urlSuffix, String urlParameters) throws MalformedURLException,
   IOException, ProtocolException {
-    String url = Jenkins.getInstance().getRootUrl() + urlSuffix;
+    String url = getURL() + urlSuffix;
     URL obj = new URL(url);
     HttpURLConnection con = (HttpURLConnection) obj.openConnection();
     con.setRequestMethod("POST");
