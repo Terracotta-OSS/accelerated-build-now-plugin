@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
+import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 
 import org.kohsuke.stapler.StaplerRequest;
@@ -113,7 +114,12 @@ public class AcceleratedBuildNowAction implements Action {
             && !(projectConsidered instanceof MatrixProject) && !(projectConsidered instanceof MatrixConfiguration)) {
           LOG.info("project : " + lastBuild.getProject().getName() + " #" + lastBuild.getNumber() + " was not scheduled by a human, killing it right now to re schedule it later !");
           Executor executor = getExecutor(lastBuild);
-          executor.interrupt(Result.ABORTED);
+          executor.interrupt(Result.ABORTED, new CauseOfInterruption() {
+            @Override
+            public String getShortDescription() {
+              return "Aborted by Accelerated Build Now Plugin. Triggering a new build for project: " + project.getName();
+            }
+          });
           killedBuild = lastBuild;
           break;
         }
